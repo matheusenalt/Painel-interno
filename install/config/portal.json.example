@@ -1,0 +1,144 @@
+{
+  "__instrucoes": "Copie para install/config/portal.json, preencha localmente e NUNCA faça commit do arquivo preenchido. Campos iniciados por __ são comentários e são ignorados pelos scripts.",
+  "release": "dr-template",
+  "company": {
+    "__comentario": "Identidade visual e configurações gerais.",
+    "name": "NOME_DO_PORTAL_AQUI",
+    "timezone": "America/Sao_Paulo",
+    "admin_email": "",
+    "website": "",
+    "slogan": "BEM_VINDO_AO_PORTAL",
+    "primary_color": "#1F6FEB",
+    "background_color": "#0D1117",
+    "allow_user_theming": true,
+    "apply_brand_background": false,
+    "login_message": "BEM_VINDO_AO_PORTAL"
+  },
+  "versions": {
+    "__comentario": "Informe versões exatas aprovadas antes da instalação. Exemplos de família: Nextcloud 34.x, MariaDB 11.4.x, Redis 7.4.x-alpine e FoxDesk 0.3.x.",
+    "nextcloud": "DEFINA_VERSAO_EXATA_APROVADA",
+    "mariadb": "DEFINA_VERSAO_EXATA_APROVADA",
+    "redis": "DEFINA_VERSAO_EXATA_APROVADA",
+    "foxdesk": "DEFINA_VERSAO_EXATA_APROVADA",
+    "__comentario_foxdesk_sha256": "Informe os 64 caracteres hexadecimais do SHA-256 do tarball da versão aprovada. Veja docs/FOXDESK-INTEGRIDADE.md.",
+    "foxdesk_sha256": "SHA256_DA_VERSAO_FOXDESK_APROVADA_AQUI"
+  },
+  "network": {
+    "__comentario": "Portas internas/localhost e domínios públicos. Não coloque IP público aqui.",
+    "nextcloud_port": 8080,
+    "foxdesk_port": 8081,
+    "production": {
+      "scheme": "https",
+      "nextcloud_domain": "SEU_DOMINIO_NEXTCLOUD_AQUI",
+      "foxdesk_domain": "SEU_DOMINIO_FOXDESK_AQUI"
+    }
+  },
+  "backup": {
+    "__comentario": "Modo pull exporta snapshots para uma conta SFTP somente leitura. O usuário abaixo é apenas nome de serviço, não credencial.",
+    "mode": "pull",
+    "sftp_user": "backupreader",
+    "export_root": "/srv/portal-backup-sftp",
+    "keep_daily_on_vps": 1,
+    "keep_weekly_on_vps": 0,
+    "vps_schedule": "30 3 * * *",
+    "restore_upload_limit": "64G",
+    "restore_inbox": "/srv/portal-restore-inbox",
+    "restore_tmp": "/srv/portal-restore-tmp"
+  },
+  "security": {
+    "__comentario": "Senha temporária é definida localmente no portal.json real; nunca versionar o valor real.",
+    "initial_user_password": "DEFINA_FORA_DO_GIT",
+    "personal_quota": "2 GB",
+    "password_policy": {
+      "min_length": 12,
+      "forbid_common_passwords": true,
+      "check_breached_passwords": true,
+      "history_size": 5
+    }
+  },
+  "groups": [
+    "gestao",
+    "tecnicos"
+  ],
+  "users": [
+    {
+      "__comentario": "Exemplo. Remova/substitua por pessoas reais apenas no arquivo local não versionado.",
+      "id": "usuario_exemplo",
+      "full_name": "NOME_COMPLETO_AQUI",
+      "email": "",
+      "groups": [
+        "tecnicos"
+      ],
+      "foxdesk_role": "agent"
+    }
+  ],
+  "apps": {
+    "required": [
+      "calendar",
+      "groupfolders",
+      "external",
+      "collectives",
+      "forms",
+      "spreed",
+      "password_policy",
+      "twofactor_totp"
+    ],
+    "optional": [
+      "assistant",
+      "passwords"
+    ]
+  },
+  "team_folders": [
+    {
+      "name": "PASTA_COMPARTILHADA_EXEMPLO",
+      "quota": "10G",
+      "permissions": {
+        "gestao": [
+          "read",
+          "write",
+          "share"
+        ],
+        "tecnicos": [
+          "read",
+          "write",
+          "share"
+        ],
+        "admin": [
+          "read",
+          "write",
+          "share",
+          "delete"
+        ]
+      },
+      "subfolders": []
+    }
+  ],
+  "calendars": [
+    {
+      "uri": "agenda-equipe",
+      "name": "AGENDA_DA_EQUIPE",
+      "owner": "admin",
+      "groups": [
+        "gestao",
+        "tecnicos"
+      ]
+    }
+  ],
+  "collective": {
+    "name": "BASE_DE_CONHECIMENTO",
+    "owner": "admin",
+    "members": [
+      "gestao",
+      "tecnicos"
+    ],
+    "pages": [
+      "Inicio"
+    ]
+  },
+  "external_links": [
+    {
+      "name": "SISTEMA_EXTERNO_EXEMPLO",
+      "url": "https://exemplo.invalid/"
+    }
+  ]
+}

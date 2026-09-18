@@ -1,0 +1,195 @@
+name: portal-interno
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  nextcloud-db:
+    image: mariadb:${MARIADB_VERSION:?Defina MARIADB_VERSION no .env}
+    container_name: portal-nextcloud-db
+    restart: unless-stopped
+    logging: *default-logging
+    command:
+      - --transaction-isolation=READ-COMMITTED
+      - --binlog-format=ROW
+      # Padrão conservador para ambientes menores. Em hosts com mais RAM,
+      # ajuste pelo .env, ex.: NC_DB_BUFFER_POOL=1024M
+      - --innodb-buffer-pool-size=${NC_DB_BUFFER_POOL:-192M}
+      - --max-connections=${NC_DB_MAX_CONNECTIONS:-100}
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      MARIADB_DATABASE: ${NC_DB_NAME}
+      MARIADB_USER: ${NC_DB_USER}
+      MARIADB_PASSWORD: ${NC_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${NC_DB_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - nextcloud_db:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  redis:
+    image: redis:${REDIS_VERSION:?Defina REDIS_VERSION no .env}
+    container_name: portal-redis
+    restart: unless-stopped
+    logging: *default-logging
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli -h 127.0.0.1 ping | grep -q '^PONG$'"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  nextcloud:
+    build:
+      context: ./nextcloud
+      args:
+        NEXTCLOUD_VERSION: ${NEXTCLOUD_VERSION:?Defina NEXTCLOUD_VERSION no .env}
+        PORTAL_CONTROL_GID: ${PORTAL_CONTROL_GID}
+    image: portal-nextcloud:${NEXTCLOUD_VERSION:?Defina NEXTCLOUD_VERSION no .env}
+    container_name: portal-nextcloud
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      nextcloud-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${NEXTCLOUD_PORT:-8080}:80"
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      MYSQL_HOST: nextcloud-db
+      MYSQL_DATABASE: ${NC_DB_NAME}
+      MYSQL_USER: ${NC_DB_USER}
+      MYSQL_PASSWORD: ${NC_DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD_FILE: /run/secrets/nextcloud_admin_password
+      NEXTCLOUD_TRUSTED_DOMAINS: ${HOST_IP} localhost ${NEXTCLOUD_DOMAIN:-}
+      PHP_MEMORY_LIMIT: 768M
+      PHP_UPLOAD_LIMIT: ${RESTORE_UPLOAD_LIMIT:-64G}
+      APACHE_BODY_LIMIT: ${RESTORE_UPLOAD_LIMIT_BYTES:-68719476736}
+    group_add:
+      - "${PORTAL_CONTROL_GID}"
+    volumes:
+      - nextcloud_app:/var/www/html
+      - ./branding:/opt/portal-branding:ro
+      - ./nextcloud-apps/portalbackup:/var/www/html/custom_apps/portalbackup:ro
+      - ./nextcloud/php-portal.ini:/usr/local/etc/php/conf.d/zz-portal-interno.ini:ro
+      - /run/portal-control:/run/portal-control:ro
+      - ${RESTORE_INBOX:-/srv/portal-restore-inbox}:/portal-restore-inbox:rw
+      - ${RESTORE_TMP:-/srv/portal-restore-tmp}:/portal-restore-tmp:rw
+    secrets:
+      - nextcloud_admin_password
+    networks:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "php -r '$$j=json_decode(file_get_contents(\"http://127.0.0.1/status.php\"),true); exit(empty($$j[\"installed\"]));'"]
+      interval: 15s
+      timeout: 8s
+      retries: 30
+      start_period: 60s
+
+  foxdesk-db:
+    image: mariadb:${MARIADB_VERSION:?Defina MARIADB_VERSION no .env}
+    container_name: portal-foxdesk-db
+    restart: unless-stopped
+    logging: *default-logging
+    command:
+      - --transaction-isolation=READ-COMMITTED
+      # Mesma lógica da base do Nextcloud acima: padrão conservador,
+      # com override em .env via FOX_DB_BUFFER_POOL.
+      - --innodb-buffer-pool-size=${FOX_DB_BUFFER_POOL:-128M}
+      - --max-connections=${FOX_DB_MAX_CONNECTIONS:-80}
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+      MARIADB_DATABASE: ${FOX_DB_NAME}
+      MARIADB_USER: ${FOX_DB_USER}
+      MARIADB_PASSWORD: ${FOX_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${FOX_DB_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - foxdesk_db:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  foxdesk:
+    build:
+      context: ./foxdesk
+      args:
+        FOXDESK_VERSION: ${FOXDESK_VERSION:?Defina FOXDESK_VERSION no .env}
+        # SHA-256 do tarball do release do FoxDesk (ver SHA256SUMS/README para
+        # como gerar). Se vazio, o build segue mas avisa; se preenchido, o
+        # Dockerfile recusa o build em caso de checksum divergente.
+        FOXDESK_SHA256: ${FOXDESK_SHA256:-}
+    container_name: portal-foxdesk
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on:
+      foxdesk-db:
+        condition: service_healthy
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${FOXDESK_PORT:-8081}:80"
+    environment:
+      TZ: ${TZ:-America/Sao_Paulo}
+    volumes:
+      - foxdesk_app:/var/www/html
+      - ./branding:/opt/portal-branding:ro
+    networks:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null"]
+      interval: 15s
+      timeout: 8s
+      retries: 30
+      start_period: 30s
+
+networks:
+  frontend:
+    name: portal-interno-frontend
+  backend:
+    name: portal-interno-backend
+    internal: true
+
+volumes:
+  nextcloud_app:
+    name: portal-nextcloud-app
+  nextcloud_db:
+    name: portal-nextcloud-db
+  redis_data:
+    name: portal-redis-data
+  foxdesk_app:
+    name: portal-foxdesk-app
+  foxdesk_db:
+    name: portal-foxdesk-db
+
+secrets:
+  nextcloud_admin_password:
+    file: ./secrets/nextcloud_admin_password

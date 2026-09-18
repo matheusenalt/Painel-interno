@@ -1,0 +1,40 @@
+# Configurações locais reais — nunca versionar
+install/config/portal.json
+install/config/team.json
+install/runtime/config/portal.json
+
+# Segredos/runtime
+.env
+*.key
+*.pem
+*.p12
+*.pfx
+id_*
+
+# Backups/dumps
+*.tar.gz
+*.sha256
+*.sql
+*.ok
+
+# Logs e temporários
+*.log
+*.tmp
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+# Edição pública: evita subir branding e artefatos internos por engano
+install/runtime/branding/*
+!install/runtime/branding/README.md
+docs/gestao/
+docs/private/
+*.docx
+*.xlsx
+*.xls
+*.pdf
+*.mp4
+*.mov
+*.rar
+*.7z

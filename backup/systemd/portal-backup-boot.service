@@ -1,0 +1,13 @@
+[Unit]
+Description=Portal Interno - rotina de boot da VM de backup (coleta + desliga)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/portal-backup-boot-run.sh
+TimeoutStartSec=13800
+
+[Install]
+WantedBy=multi-user.target

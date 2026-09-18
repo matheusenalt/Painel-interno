@@ -1,0 +1,19 @@
+[Unit]
+Description=Portal Interno - agenda a checagem diurna de segurança (alternativa 2: recuperar durante o dia)
+Documentation=file:///opt/portal-interno-vm-backup/docs/PASSO-A-PASSO-VM-BACKUP.md
+
+[Timer]
+# De hora em hora, das 8h às 22h. NÃO acorda o notebook do suspenso de
+# propósito (sem WakeSystem=) — a ideia é aproveitar quando o notebook já
+# está ligado/em uso durante o dia, não interromper ninguém. O próprio
+# portal-backup-host-run.sh (modo "daytime") só faz alguma coisa de fato se o
+# último backup com sucesso estiver mais velho que DAYTIME_STALE_HOURS; o
+# resto do tempo essa checagem só lê um arquivo local, sem ligar a VM nem
+# montar o HD — é por isso que a VM "só consome internet durante o
+# download/gravação", não o dia inteiro.
+OnCalendar=*-*-* 08,09,10,11,12,13,14,15,16,17,18,19,20,21,22:00:00
+Persistent=false
+AccuracySec=5min
+
+[Install]
+WantedBy=timers.target

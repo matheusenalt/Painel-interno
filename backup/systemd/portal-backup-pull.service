@@ -1,0 +1,15 @@
+[Unit]
+Description=Portal Interno - coleta pull dos snapshots da VPS (SFTP somente leitura)
+After=network-online.target
+Wants=network-online.target
+# Não deixa rodar duas coletas ao mesmo tempo (ex.: teste manual + boot).
+ConditionPathExists=/etc/portal-backup/backup.env
+
+[Service]
+Type=oneshot
+User=backupreader
+Group=backupreader
+Environment=HOME=/home/backupreader
+ExecStart=/usr/local/sbin/portal-backup-pull.sh
+# Timeout amplo para snapshots grandes; o SFTP usa keepalive e o host tem um teto maior.
+TimeoutStartSec=13200

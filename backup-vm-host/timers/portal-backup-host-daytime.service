@@ -1,0 +1,9 @@
+[Unit]
+Description=Portal Interno - checagem diurna de segurança (só age se o backup estiver atrasado)
+Documentation=file:///opt/portal-interno-vm-backup/docs/PASSO-A-PASSO-VM-BACKUP.md
+ConditionPathExists=/etc/portal-backup-host/host.env
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/portal-backup-host-run.sh daytime
+TimeoutStartSec=15000

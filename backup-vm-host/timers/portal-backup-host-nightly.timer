@@ -1,0 +1,21 @@
+[Unit]
+Description=Portal Interno - agenda a tentativa principal noturna de backup (03:30)
+Documentation=file:///opt/portal-interno-vm-backup/docs/PASSO-A-PASSO-VM-BACKUP.md
+
+[Timer]
+# VPS gera o snapshot às 02:30 (ver provisionamento/cron/portal-backup);
+# 03:30 dá uma folga de 1h antes da VM tentar coletar.
+OnCalendar=*-*-* 03:30:00
+# ACORDA o notebook do suspenso (S3) pra rodar isto — é a peça que resolve
+# "ligar mesmo se ele estiver suspenso". Não liga um notebook desligado de
+# verdade (isso exigiria Wake-on-LAN/RTC de firmware, fora do alcance do
+# systemd); ver docs/PASSO-A-PASSO-VM-BACKUP.md sobre essa diferença.
+WakeSystem=true
+# Se o notebook estava desligado/sem energia às 03:30 e só ligou depois,
+# roda assim que possível (ainda conta como "tentativa principal", não
+# como a checagem diurna).
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

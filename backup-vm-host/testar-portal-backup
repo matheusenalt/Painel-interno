@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Teste manual da VM de backup.
+#   sudo testar-portal-backup          -> autentica e lista a raiz de snapshots
+#   sudo testar-portal-backup --pull   -> executa a coleta completa
+set -Eeuo pipefail
+
+CONF="/etc/portal-backup/backup.env"
+[[ -f "$CONF" ]] || { echo "ERRO: $CONF não encontrado. Rode install-vm-linux.sh primeiro." >&2; exit 1; }
+# shellcheck disable=SC1090
+source "$CONF"
+
+VPS_HOST="${VPS_HOST:?defina VPS_HOST em $CONF}"
+VPS_PORT="${VPS_PORT:-22}"
+VPS_USER="${VPS_USER:-backupreader}"
+REMOTE_ROOT="${REMOTE_ROOT:-/files}"
+LOCAL_MOUNT="${LOCAL_MOUNT:-/mnt/portal-backups}"
+IDENTITY="/home/backupreader/.ssh/id_ed25519"
+KNOWN_HOSTS="/home/backupreader/.ssh/known_hosts"
+
+ok(){ printf '  [OK] %s\n' "$*"; }
+fail(){ printf '  [FALHA] %s\n' "$*" >&2; exit 1; }
+
+printf '\n=== Teste da VM de backup ===\n'
+[[ -f "$IDENTITY" ]] && ok "chave privada presente" || fail "chave privada ausente"
+# Dispara automount e exige filesystem real; autofs sozinho não vale como HD montado.
+ls -A "$LOCAL_MOUNT" >/dev/null 2>&1 || true
+fstype="$(findmnt -T "$LOCAL_MOUNT" -n -o FSTYPE 2>/dev/null || true)"
+[[ -n "$fstype" && "$fstype" != "autofs" ]] && ok "$LOCAL_MOUNT montado ($fstype)" || fail "$LOCAL_MOUNT não está com o HD real montado"
+if runuser -u backupreader -- touch "$LOCAL_MOUNT/.backupreader-test-write" 2>/dev/null; then
+  rm -f "$LOCAL_MOUNT/.backupreader-test-write"
+  ok "$LOCAL_MOUNT gravável por backupreader"
+else
+  fail "$LOCAL_MOUNT não é gravável por backupreader"
+fi
+
+batch="$(printf 'ls -1 %s/daily\nls -1 %s/weekly\n' "${REMOTE_ROOT%/}" "${REMOTE_ROOT%/}")"
+if log_test="$(printf '%s' "$batch" | runuser -u backupreader -- sftp -q -o BatchMode=yes -o IdentityFile="$IDENTITY" -o UserKnownHostsFile="$KNOWN_HOSTS" \
+  -o StrictHostKeyChecking=yes -o ConnectTimeout=10 -o ServerAliveInterval=30 -o ServerAliveCountMax=4 \
+  -P "$VPS_PORT" -b - "${VPS_USER}@${VPS_HOST}" 2>&1)"; then
+  ok "SFTP autenticou e listou ${REMOTE_ROOT%/}/daily e ${REMOTE_ROOT%/}/weekly"
+else
+  fail $'não consegui autenticar/listar via SFTP. Saída:\n'"$log_test"$'\nConfira fingerprint, chave pública autorizada na VPS e o caminho /files do chroot.'
+fi
+
+[[ -n "$log_test" ]] && printf '%s\n' "$log_test" | sed 's/^/    /'
+
+if [[ "${1:-}" == "--pull" ]]; then
+  printf '\nRodando coleta completa...\n'
+  systemctl start --wait portal-backup-pull.service && ok "coleta concluída com sucesso" || fail "coleta terminou com erro — veja journalctl -u portal-backup-pull.service -e"
+fi
+printf '\nTudo certo.\n'

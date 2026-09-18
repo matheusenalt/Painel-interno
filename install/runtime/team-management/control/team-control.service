@@ -1,0 +1,14 @@
+[Unit]
+Description=Gestão de Equipe - controle de usuários
+After=docker.service portal-control.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/lib/team-management/team-control.py
+Restart=on-failure
+RestartSec=2
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

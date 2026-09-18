@@ -1,0 +1,33 @@
+{
+  "__instrucoes": "Copie para install/config/team.json somente na máquina do técnico. Não versionar o arquivo preenchido.",
+  "users": [],
+  "employee_management": {
+    "temporary_password": "DEFINA_FORA_DO_GIT",
+    "personal_quota": "2 GB",
+    "allowed_sectors": [
+      {
+        "id": "tecnicos",
+        "name": "Técnicos"
+      },
+      {
+        "id": "gestao",
+        "name": "Gestão"
+      }
+    ]
+  },
+  "theme": {
+    "enabled": false,
+    "primary_color": "#1F6FEB",
+    "background_color": "#0D1117",
+    "favicon_source": ""
+  },
+  "smtp": {
+    "enabled": false,
+    "host": "SERVIDOR_SMTP_AQUI",
+    "port": 465,
+    "encryption": "ssl",
+    "username": "USUARIO_SMTP_AQUI",
+    "from_email": "REMETENTE_AQUI",
+    "from_name": "NOME_REMETENTE_AQUI"
+  }
+}

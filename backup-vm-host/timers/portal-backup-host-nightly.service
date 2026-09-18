@@ -1,0 +1,10 @@
+[Unit]
+Description=Portal Interno - tentativa principal noturna de backup (liga VM, roda pull, desliga)
+Documentation=file:///opt/portal-interno-vm-backup/docs/PASSO-A-PASSO-VM-BACKUP.md
+ConditionPathExists=/etc/portal-backup-host/host.env
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/portal-backup-host-run.sh nightly
+# Cobre transferências grandes sem matar a VM no meio do snapshot.
+TimeoutStartSec=15000

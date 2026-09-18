@@ -1,0 +1,28 @@
+[Unit]
+Description=Portal Interno - controle restrito de backup e restauração
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Group=portalctl
+EnvironmentFile=/opt/portal-interno/.env
+ExecStart=/usr/bin/python3 /opt/portal-interno/control/portal-control.py
+Restart=on-failure
+RestartSec=3
+RuntimeDirectory=portal-control
+RuntimeDirectoryMode=0750
+RuntimeDirectoryPreserve=restart
+StateDirectory=portal-control
+StateDirectoryMode=0750
+LogsDirectory=portal-control
+LogsDirectoryMode=0750
+UMask=0007
+NoNewPrivileges=yes
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

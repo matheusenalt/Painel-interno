@@ -1,0 +1,3 @@
+# FoxDesk tarefas recorrentes e manutenção
+0 * * * * root docker exec -u www-data portal-foxdesk php /var/www/html/bin/process-recurring-tasks.php >> /var/log/portal-foxdesk-cron.log 2>&1
+30 2 * * * root docker exec -u www-data portal-foxdesk php /var/www/html/bin/run-maintenance.php >> /var/log/portal-foxdesk-maintenance.log 2>&1

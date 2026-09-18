@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>teammanager</id>
+    <name>Gestão de Equipe</name>
+    <summary>Gestão de funcionários, e-mail/FoxDesk, setores e desligamento</summary>
+    <description>Painel interno para cadastrar funcionários, adicionar ou alterar e-mail com provisionamento automático no FoxDesk, trocar setores e realizar desligamentos protegidos, sem permitir promoção para admin.</description>
+    <version>1.2.0</version>
+    <licence>agpl</licence>
+    <author>Projeto demonstrativo</author>
+    <namespace>TeamManager</namespace>
+    <category>tools</category>
+    <dependencies>
+        <nextcloud min-version="34" max-version="34"/>
+    </dependencies>
+    <navigations>
+        <navigation>
+            <name>Gestão de Equipe</name>
+            <route>teammanager.page.index</route>
+            <icon>app.svg</icon>
+            <order>89</order>
+        </navigation>
+    </navigations>
+</info>

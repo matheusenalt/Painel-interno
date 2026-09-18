@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>portalbackup</id>
+    <name>Backup e Restauração</name>
+    <summary>Backup e restauração operacional do Portal Interno</summary>
+    <description>Interface administrativa para acionar o backup do host e restaurar snapshots locais ou arquivos externos validados.</description>
+    <version>1.0.2</version>
+    <licence>agpl</licence>
+    <author>Projeto demonstrativo</author>
+    <namespace>PortalBackup</namespace>
+    <category>tools</category>
+    <dependencies>
+        <nextcloud min-version="34" max-version="34"/>
+    </dependencies>
+    <navigations>
+        <navigation>
+            <name>Backup e Restauração</name>
+            <route>portalbackup.page.index</route>
+            <icon>app.svg</icon>
+            <order>90</order>
+            <role>admin</role>
+        </navigation>
+    </navigations>
+</info>

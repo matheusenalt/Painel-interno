@@ -1,0 +1,2 @@
+# Gera snapshot consistente na VPS às 02:30. Em modo pull, a VM de backup coleta depois.
+30 2 * * * root /opt/portal-interno/scripts/backup.sh >> /var/log/portal-backup.log 2>&1
