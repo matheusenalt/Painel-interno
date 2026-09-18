@@ -223,7 +223,7 @@ Para produção, revise os limites de memória, armazenamento, DNS, SMTP, reten�
 Clone:
 
 ```bash
-git clone https://github.com/SEU_USUARIO/portal-interno-selfhosted.git
+git clone https://github.com/matheusenalt/Painel-interno.git
 cd portal-interno-selfhosted
 ```
 
