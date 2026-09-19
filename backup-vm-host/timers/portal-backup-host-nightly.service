@@ -8,3 +8,4 @@ Type=oneshot
 ExecStart=/usr/local/sbin/portal-backup-host-run.sh nightly
 # Cobre transferências grandes sem matar a VM no meio do snapshot.
 TimeoutStartSec=15000
+ExecStartPre=/bin/sleep 30
